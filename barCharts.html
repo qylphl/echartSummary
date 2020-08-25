@@ -1,0 +1,1842 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>柱状图</title>
+    <script src="js/echarts/echarts.min.js"></script>
+    <style>
+        *{
+            margin: 0;
+            padding: 0;
+        }
+        body{
+            min-height: 100vh;
+        }
+        .flex-box {
+            display: flex;
+            align-items: center;
+            justify-content: flex-start;
+        }
+        .echarts-box{
+            width: 600px;
+            height: 400px;
+            float: left;
+            padding: 10px;
+            box-sizing: border-box;
+        }
+        /* 带阴影柱状图的图例 */
+        .echarts_legend{
+            display: none;
+            cursor: default;
+            position: absolute;
+            z-index: 99;
+            right: 55px;
+            /* top: 94px;  */
+            padding-left: 15px;
+            border-left: 2px solid #333;
+            border-image: -webkit-linear-gradient(#30c0ff,#34beff,#3db6ff,#3eb4fe,#4da7ff,#51a2fe,#5f94fe,#648efe,#747fff,#7a78ff,#8769ff,#8f63ff,#9d55ff,#a350ff,#ae44fc,#b440fb,#be38f7,#c336f4,#cd36e7,#d335e1,#de3bcc,#e43fbf,#ea49a7,#ec4f9c,#f1598a,#f5607d) 20 20;
+            border-image: -moz-linear-gradient(#30c0ff,#34beff,#3db6ff,#3eb4fe,#4da7ff,#51a2fe,#5f94fe,#648efe,#747fff,#7a78ff,#8769ff,#8f63ff,#9d55ff,#a350ff,#ae44fc,#b440fb,#be38f7,#c336f4,#cd36e7,#d335e1,#de3bcc,#e43fbf,#ea49a7,#ec4f9c,#f1598a,#f5607d) 20 20;
+            border-image: -o-linear-gradient(#30c0ff,#34beff,#3db6ff,#3eb4fe,#4da7ff,#51a2fe,#5f94fe,#648efe,#747fff,#7a78ff,#8769ff,#8f63ff,#9d55ff,#a350ff,#ae44fc,#b440fb,#be38f7,#c336f4,#cd36e7,#d335e1,#de3bcc,#e43fbf,#ea49a7,#ec4f9c,#f1598a,#f5607d) 20 20;
+            border-image: linear-gradient(#30c0ff,#34beff,#3db6ff,#3eb4fe,#4da7ff,#51a2fe,#5f94fe,#648efe,#747fff,#7a78ff,#8769ff,#8f63ff,#9d55ff,#a350ff,#ae44fc,#b440fb,#be38f7,#c336f4,#cd36e7,#d335e1,#de3bcc,#e43fbf,#ea49a7,#ec4f9c,#f1598a,#f5607d) 20 20;
+        }
+        .echarts_legend::after{
+            content: '';
+            position: absolute;
+            bottom: 3px;
+            left: -8px;
+            display: inline-block;
+            width: 8px;
+            height: 1px;
+            border-bottom: 2px solid #f5607d;
+            transform: rotate(45deg);
+
+        }
+        .legend_sort_tip{
+            position: absolute;
+            left: -23px;
+            font-size: 14px;
+            color: #333;
+        }
+        .sort_tip_top{
+            top: -2px;
+        }
+        .sort_tip_bottom{
+            bottom: -8px;
+        }
+        .legend_content{
+            align-items: flex-start;
+            padding-top: 15px;
+        }
+        .legend_content:nth-child(3){
+            padding-top: 0;
+            height: 18px;
+            align-items: flex-end;
+        }
+        .legend_content:last-child{
+            height: 18px;
+        }
+        .legend_content span{
+            display: inline-block;
+            box-sizing: border-box;
+        }
+        .legend_index{
+            width: 22px;
+            height: 22px;
+            line-height: 22px;
+            text-align: center;
+            color: #fff;
+            font-size: 12px;
+            border-radius: 50%;
+            background-color: #527afe;
+        }
+        .legend_title{
+            max-width: 184px;
+            padding-left: 15px;
+            font-size: 16px;
+            color: #333;
+        }
+    </style>
+</head>
+<body>
+    <!-- 普通柱状图 -->
+    <div class="echarts-box" id="bar-chart" style="width: 700px;"></div>
+    <!-- 渐变柱状图 -->
+    <div class="echarts-box" id="bar-chart2" style="width: 1000px;"></div>
+    <!-- 横向柱状图 -->
+    <div class="echarts-box" id="bar-chart3"></div>
+    <!-- 多数据柱状图 -->
+    <div class="echarts-box" id="bar-chart4" style="width: 850px;"></div>
+    <!-- 堆积柱状图 -->
+    <div class="echarts-box" id="bar-chart5"></div>
+    <!-- 正负延时柱状图 -->
+    <div class="echarts-box" id="bar-chart6" style="width: 1000px;"></div>
+    <!-- 别致堆积柱状图 -->
+    <div class="echarts-box" id="bar-chart7"></div>
+    <!-- 小横线别致柱状图 -->
+    <div class="echarts-box" id="bar-chart8"></div>
+    <!-- 立体柱状图 -->
+    <div class="echarts-box" id="bar-chart9"></div>
+    <!-- 横向立体柱状图 -->
+    <div class="echarts-box" id="bar-chart10"></div>
+    <!-- 带阴影的柱状图 -->
+    <div class="echarts-box" style="position: relative;width: 1000px;">
+        <div class="echarts_legend"></div>
+        <div class="echarts-box" id="bar-chart11" style="height: 500px;"></div>
+    </div>
+    
+</body>
+<script>
+    function barChart(){
+        var data = [
+            {
+                name:'违反政治纪律行为',
+                value:'150'
+            },
+            {
+                name:'违反组织纪律行为',
+                value:'208'
+            }, 
+            {
+                name:'违反廉洁纪律行为',
+                value:'644'
+            },
+            {
+                name:'违反群众纪律行为',
+                value:'205'
+            }, 
+            {
+                name:'违反工作纪律行为',
+                value:'125'
+            }, 
+            {
+                name:'违反生活纪律行为',
+                value:'63'
+            }, 
+            {
+                name:'贪污贿赂类行为',
+                value:'121'
+            },
+            {
+                name:'滥用职权类行为',
+                value:'45'
+            },  
+            {
+                name:'玩忽职守类行为',
+                value:'22'
+            }, 
+            {
+                name:'徇私舞弊类行为',
+                value:'21'
+            }, 
+            {
+                name:'重大责任事故类行为',
+                value:'15'
+            }, 
+            {
+                name:'其他违法犯罪行为',
+                value:'85'
+            }
+        ];
+        var bar_chart = echarts.init(document.getElementById('bar-chart'));
+        //图表自适应
+        window.addEventListener("resize", function() {
+            bar_chart.resize();
+        });
+        var option = {
+                title: {
+                    text: '行政级别',
+                },
+                tooltip: {
+                    trigger: 'axis',
+                    show: true,  
+                    extraCssText:'width:max-content;height:60px;',
+                    backgroundColor:'rgba(0,0,0,0.6)',//通过设置rgba调节背景颜色与透明度
+                    padding: 10,
+                    textStyle: {
+                        color:'#fff' ,
+                        fontSize: 12,//字体大小
+                    }, 
+                },
+                grid: {
+                    left: '8%', // 默认10%，给24就挺合适的。
+                    right: '5%', // 默认10%
+                    top: '15%',
+                    bottom: '30%',
+                },
+                calculable: true,
+                xAxis: [{
+                    type: 'category',
+                    data: data.map(v => v.name),
+                    "axisTick": {       //刻度线
+                        "show": false
+                    },
+                    axisLabel: {
+                        show: true,
+                        interval: 0,
+                        rotate: 50,
+                    }
+                }],
+                yAxis: [{
+                    type: 'value',
+                    axisLine: { //y轴
+                        show: false
+                    },
+                    axisTick: { //y轴刻度线
+                        show: false
+                    },
+                }],
+                series: [{
+                    name: '行政级别',
+                    type: 'bar',
+                    barWidth: 15,
+                    label: {
+                        normal: {
+                            show: true,
+                            position: 'top',
+                            color: '#B6B6B6',
+                        }
+                    },
+                    data: data.map(v => v.value),
+                    itemStyle: {
+                        normal: {color: '#CB7F83', barBorderRadius: [20, 20, 0, 0],},
+                    },
+                }]
+            }
+        // 使用刚指定的配置项和数据显示图表。
+        bar_chart.setOption(option, true);
+    }
+    function barChart2(){
+        var data = {
+            xAxisData:[
+                "福建省","安徽省","浙江省","广东省","河南省","湖北省","宁夏回族自治区","广西壮族自治区","湖南省",
+                "福建省","安徽省","浙江省","广东省","河南省","湖北省","宁夏回族自治区","广西壮族自治区","湖南省",
+                "福建省","安徽省","浙江省","广东省","河南省","湖北省","宁夏回族自治区","广西壮族自治区","湖南省",
+                "福建省","安徽省","浙江省","广东省","河南省","湖北省","宁夏回族自治区","广西壮族自治区","湖南省"
+            ],
+            seriesData:[
+                7500,3800,4800,3500,2800,6800,1800,5800,3800,
+                7500,3800,4800,3500,2800,6800,1800,5800,3800,
+                7500,3800,4800,3500,2800,6800,1800,5800,3800,
+                7500,3800,4800,3500,2800,6800,1800,5800,3800
+            ],
+        };
+        var bar_chart2 = echarts.init(document.getElementById('bar-chart2'));
+        //图表自适应
+        window.addEventListener("resize", function() {
+            bar_chart2.resize();
+        });
+        var option= {
+          color: '#fb8168',
+          grid: {
+            left: 21,
+            top: 37,
+            right: 23,
+            bottom: 0,
+            containLabel: true,
+          },
+          tooltip: {
+              show: true,
+              extraCssText:'width:max-content;height:auto;',
+          },
+          xAxis: {
+            type: 'category',
+            data:data.xAxisData,
+            axisLine:{
+              lineStyle:{
+                fontSize: 16,
+                color:'#c9c6c6'
+              }
+            },
+            axisTick:{
+              show: false,
+            },
+            axisLabel: {
+              fontSize: 12,
+              color: '#333333',
+              interval: 0,
+              rotate: 50
+            },
+          },
+          yAxis: {
+            axisLine: {
+              show: false
+            },
+            axisTick: {
+              show: false
+            },
+            axisLabel: {
+              textStyle: {
+                fontSize: 16,
+                color: '#666666'
+              }
+            },
+            splitLine: {
+              lineStyle:{
+                color: '#ced3dc',
+                width: 1,
+                type: 'solid'
+              }
+            }
+          },
+          series: [
+            {
+              type: 'bar',
+              barWidth: 16,
+              itemStyle: {
+                barBorderRadius: 30,
+                emphasis: {
+                  barBorderRadius: 30,
+                },
+                normal: {
+                  barBorderRadius: 7,
+                  color: function(params) {
+                    // build a color map as your need.
+                    var colorList = [
+                      '#4c6be9','#5266e8','#5866e8','#5f66ea','#6866ec',
+                      '#6f66ef','#7a66f2','#8266f4','#8c66f7','#9466f8',
+                      '#9d66f8','#a465f7','#ab62f6','#b25ff4','#ba5af1',
+                      '#c056ee','#c552ea','#d04de0','#d64dd9','#da4dd3',
+                      '#de50cb','#e153c4','#e457bc','#e457bc','#e75cb1',
+                      '#ea61a8','#ed679e','#f37487','#f87d75','#fb8167',
+                      '#fb8167','#fb8168','#fb8167','#fe7e5f','#fe7b5c',
+                      '#fe765b','#fe705a','#fe6b59'
+                    ];
+                    return colorList[params.dataIndex]
+                  },
+                }
+              },
+              data: data.seriesData,
+            }
+          ],
+        };
+        // 使用刚指定的配置项和数据显示图表。
+        bar_chart2.setOption(option, true);
+    }
+    function barChart3(){
+        var data = {
+            yAxisData:["违反生活纪律行为", "违反工作纪律行为", "违反群众纪律行为", "违反廉洁纪律行为", "违反组织纪律行为","违反政治纪律行为"],
+            seriesData:[658,478,387,308,512,680],
+        }
+        var bar_chart3 = echarts.init(document.getElementById('bar-chart3'));
+        var option = {
+          legend: {
+            right: 20,
+            top: 5,
+            itemWidth: 19,
+            itemHeight: 4,
+            textStyle:{
+              fontSize:14,
+              color:'#333333',
+            },
+            orient: "vertical",
+            data: ["信访量"]
+          },
+          grid: {
+            left: 21,
+            top: 37,
+            right: 38,
+            bottom: 10,
+            containLabel: true,
+          },
+          xAxis: {
+            type: "value",
+            axisTick: {
+              show: false
+            },
+            axisLine:{
+              lineStyle:{
+                color: '#e5e5e5',
+              }
+            },
+            axisLabel:{
+              color:'#333333',
+              fontSize:16,
+            },
+            splitLine: {
+              lineStyle:{
+                color: '#f0f0f0',
+                width: 1,
+                type: 'dashed'
+              }
+            }
+          },
+          yAxis: {
+            type: "category",
+            data: data.yAxisData,
+            axisTick: {
+              show: false
+            },
+            axisLabel:{
+              color:'#333333',
+              fontSize:16,
+            },
+            axisLine: {
+              lineStyle: {
+                color:'#e5e5e5'
+              }
+            }
+          },
+          series: [
+            {
+              name: "信访量",
+              type: "bar",
+              label: {
+                show: true,
+                fontSize:12,
+                position: "insideRight"
+              },
+              z: 5,
+              data: data.seriesData,
+              barWidth: 18,
+              itemStyle: {
+                color: '#43a0ff',
+                barBorderRadius: [0,9,9,0],
+              },
+
+            },
+          ]
+        }
+        bar_chart3.setOption(option, true);
+    }
+    function barChart4(){
+        var data = {
+            yAxisData:["河北省","河南省","湖北省","湖南省","山西省","安徽省","浙江省","山东省","四川省","陕西省","江苏省","福建省"],
+            seriesData:[108, 78, 58, 120, 93, 100, 80, 45, 118, 75, 50, 118],
+            seriesData2:[60, 94, 60, 60, 59, 58, 90, 58, 58, 90, 58, 58]
+        }
+        var bar_chart4 = echarts.init(document.getElementById('bar-chart4'));
+        var option = {
+            tooltip: {
+                trigger: 'axis',
+                show: true,
+                extraCssText:'width:max-content;height:auto;',
+            },
+            grid: {
+                left: 21,
+                top: 37,
+                right: 140,
+                bottom: 0,
+                containLabel: true,
+            },
+            legend: {
+                orient: "vertical",
+                right: 0,
+                top: "top",
+                // bottom: 10,
+                itemWidth: 20,
+                itemHeight: 3,
+                itemGap: 15,
+                // left: 10,
+                data: ["非重复举报件", "重复举报件"]
+            },
+            xAxis:{
+                type: "category",
+                data: data.yAxisData
+            },
+            yAxis:{
+                type: "value"
+            },
+            series: [
+            {
+                name: "非重复举报件",
+                type: "bar",
+                data: data.seriesData,
+                markPoint: {
+                data: [
+                    { type: "average" }
+                    // {type: 'min', name: '最小值'}
+                ]
+                },
+                barWidth: 16,
+                itemStyle: {
+                barBorderRadius: 30,
+                color: "#fb8168"
+                }
+                // markLine: {
+                //     data: [
+                //         {type: 'average', name: '平均值'}
+                //     ]
+                // }
+            },
+            {
+                name: "重复举报件",
+                type: "bar",
+                data: data.seriesData2,
+                markPoint: {
+                data: [
+                    { type: "average" }
+                    // {name: '年最高', value: 182.2, xAxis: 7, yAxis: 183},
+                    // {name: '年最低', value: 2.3, xAxis: 11, yAxis: 3}
+                ]
+                },
+                barWidth: 16,
+                itemStyle: {
+                barBorderRadius: 30,
+                color: "#43a0ff"
+                }
+                // markLine: {
+                //     data: [
+                //         {type: 'average', name: '平均值'}
+                //     ]
+                // }
+            }
+            ]
+      };
+        bar_chart4.setOption(option, true);
+    }
+    function barChart5(){
+        var data = {
+            legendData:['来信', '来访', '网络', '电话'],
+            seriesData:['北京', '天津', '河北', '山西', '江苏', '上海', '浙江', '福建', '山东', '辽宁'],
+        };
+        var bar_chart5 = echarts.init(document.getElementById('bar-chart5'));
+        var option = {
+          title: {
+            show: true,//显示策略，默认值true,可选为：true（显示） | false（隐藏）
+            text: '问题属地分布',//主标题文本，'\n'指定换行
+            x: 'left',//水平安放位置，默认为'left'，可选为：'center' | 'left' | 'right' | {number}（x坐标，单位px）
+            y: 'top',//垂直
+          },
+          grid: {
+            left: '8%', // 默认10%，给24就挺合适的。
+            right: '12%', // 默认10%
+            top: '18%',
+            height: '75%',
+          },
+          tooltip: {
+            trigger: 'axis',
+            axisPointer: {            // 坐标轴指示器，坐标轴触发有效
+              type: 'shadow'        // 默认为直线，可选为：'line' | 'shadow'
+            },
+            extraCssText:'width:max-content;height:auto;',
+          },
+          legend: {
+            data: data.legendData,
+            orient: 'vertical',
+            x: 'right',      //可设定图例在左、右、居中
+            y: 'top',     //可设定图例在上、下、居中
+          },
+          calculable: true,
+          yAxis:{
+            type: "value",
+            axisLine: { //y轴
+                show: false
+            },
+            axisTick: { //y轴刻度线
+                show: false
+            },
+          },
+          xAxis:{
+            type: 'category',
+            data: data.seriesData,
+            axisTick: {       //刻度线
+                show: false
+            },
+            // splitLine:{
+            //   show:false,
+            // },
+          },
+          series: [
+            {
+              name: '来信',
+              type: 'bar',
+              stack: '总量',
+              barWidth: 15,
+              // itemStyle: {normal: {label: {show: true, position: 'inside'}}},
+              data: [320, 302, 301, 334, 390, 330, 320, 200, 300, 217],
+              //设置柱体颜色
+              itemStyle: {
+                normal: {color: '#61C5C7'}
+              },
+            },
+            {
+              name: '来访',
+              type: 'bar',
+              barWidth: 15,
+              stack: '总量',
+              //itemStyle: {normal: {label: {show: true, position: 'inside'}}},
+              data: [120, 132, 101, 134, 90, 230, 210, 200, 300, 217],
+              itemStyle: {
+                normal: {color: '#B2A3DA'}
+              }
+            },
+            {
+              name: '网络',
+              type: 'bar',
+              barWidth: 15,
+              stack: '总量',
+              //itemStyle: {normal: {label: {show: true, position: 'inside'}}},
+              data: [220, 182, 191, 234, 290, 330, 310, 200, 300, 217],
+              itemStyle: {
+                normal: {color: '#6EB0EA'}
+              }
+            },
+            {
+              name: '电话',
+              type: 'bar',
+              barWidth: 15,
+              stack: '总量',
+              //itemStyle: {normal: {label: {show: true, position: 'inside'}}},
+              data: [150, 212, 201, 154, 190, 330, 410, 200, 300, 217],
+              itemStyle: {
+                normal: {
+                  color: '#F5BB89', //柱形图圆角，初始化效果
+                  barBorderRadius: [20, 20, 0, 0],
+                },
+              },
+            },
+          ]
+        }
+        bar_chart5.setOption(option, true);
+    }
+    function barChart6(){
+        var data = {
+            xAxisData:[],
+            data1:[],
+            data2:[]
+        };
+        for (var i = 0; i < 100; i++) {
+            data.xAxisData.push(i);
+            data.data1.push((Math.sin(i / 5) * (i / 5 -10) + i / 6) * 5);
+            data.data2.push((Math.cos(i / 5) * (i / 5 -10) + i / 6) * 5);
+        }
+        var bar_chart6 = echarts.init(document.getElementById('bar-chart6'));
+        var option = {
+          color: ['#009cff', '#ffd211'],
+          legend: {
+            data: [
+              {
+                name:'同比',
+                textStyle: {
+                  color: '#333',
+                  fontSize :'12',
+                //   fontWeight:'bold'
+                },
+              },
+              {
+                name: '环比',
+                textStyle: {
+                  color: '#333',
+                  fontSize:'12',
+                //   fontWeight:'bold'
+                }
+              }
+            ],
+            right:'10%',
+            textStyle:{
+
+            }
+          },
+          tooltip: {extraCssText:'width:auto;height:auto;',},
+          xAxis: {
+            name:'月份',
+            data: data.xAxisData,
+            splitLine: {
+              show: false
+            },
+            nameTextStyle:{
+              color:'#333'
+            },
+            axisLine:{
+              lineStyle:{
+                color:'#333'
+              }
+            },
+            axisLabel:{
+              // interval:30   //x轴坐标刻度标签显示的间隔
+              interval: 8,
+               formatter:function(value,index){
+                 return (value/9 + 1) + "月" 
+               }
+            },
+            splitLine:{
+              show:false
+            }
+          },
+          yAxis: {
+            name:'人数',
+            nameTextStyle:{
+              color:'#333'
+            },
+            axisLine:{
+              lineStyle:{
+                color:'#333'
+              }
+            }
+          },
+          series: [
+          {
+            name: '同比',
+            type: 'bar',
+            data: data.data1,
+            animationDelay: function (idx) {
+              return idx * 10;
+            }
+          },
+          {
+            name: '环比',
+            type: 'bar',
+            data: data.data2,
+            animationDelay: function (idx) {
+              return idx * 10 + 100;
+            }
+          }],
+          animationEasing: 'elasticOut',
+          animationDelayUpdate: function (idx) {
+            return idx * 5;
+          }
+        }
+        bar_chart6.setOption(option, true);
+    }
+    function barChart7(){
+        var data ={"personCountList":["0","7","47","51","720","704","754"],"caseLinkRelativeRatio":["--","--","642.86","5.77","1470.91","12.96","51.64"],"personLinkRelativeRatio":["--","--","571.43","8.51","1311.76","-2.22","7.10"],"category":[1,2,3,4,5,6,7],"caseCountList":["0","7","52","55","864","976","1480"]};
+        var hbdata=[];
+        var hbdata2=[];
+        data.caseLinkRelativeRatio.forEach((v, i) => {
+            if(v.indexOf("-") != -1 && v.indexOf("--")){
+                v=v.replace("-","");
+            }else{
+                v=v;
+            }   
+            hbdata.push(v);     
+        })
+        data.personLinkRelativeRatio.forEach((v, i) => {
+            if(v.indexOf("-") != -1 && v.indexOf("--")){
+                v=v.replace("-","");
+            }else{
+                v=v;
+            }   
+            hbdata2.push(v);     
+        })
+        var bar_chart7 = echarts.init(document.getElementById('bar-chart7'));
+        var option = {
+            tooltip: {
+                trigger: 'axis',
+                extraCssText:'width:auto;height:auto;',
+                padding: [10,20],    // 内边距
+                backgroundColor:'rgba(255,255,255,0.9)',//通过设置rgba调节背景颜色与透明度
+                textStyle:{
+                    color:'#f3f3f3',
+                },
+                lineStyle: {
+                    color:'#f3f3f3',
+                    width: 3,
+                    opacity: 0.61
+                },
+                formatter: function (params, ticket, callback) {
+                    var htmlStr = "<div style='color: #0f0f0f;width:auto;height:auto;'>";
+                    if(hbdata[params[0].dataIndex]=='--'){
+                        htmlStr += "<p style='font-size:15px;padding:5px 0;'><span style='display:inline-block;width:60px;font-size:14px;margin-left:10px;text-align: left;'>立案数&nbsp&nbsp&nbsp</span><span style='display:inline-block;width:40px;font-size:18px;color:#0675eb;margin-left:20px;margin-right:6px;text-align: right;'>" + params[0].value + "</span>件  环比<span>" +hbdata[params[0].dataIndex]+ "</span></p>"
+                    }else{
+                        var imgUrl = +hbdata[params[0].dataIndex] > 0 ? 'images/rise_icon.png' : 'images/decline_icon.png';
+                        htmlStr += "<p style='font-size:15px;padding:5px 0;'><span style='display:inline-block;width:60px;font-size:14px;margin-left:10px;text-align: left;'>立案数&nbsp&nbsp&nbsp</span><span style='display:inline-block;width:40px;font-size:18px;color:#0675eb;margin-left:20px;margin-right:6px;text-align: right;'>" + params[0].value + "</span>件  环比<span><img src="+ imgUrl +" alt='' style='width:8px;height:auto;margin:0 5px 0 15px;'>" +hbdata[params[0].dataIndex]+ "%</span></p>"
+                    }
+                    if(hbdata2[params[0].dataIndex]=='--'){
+                        htmlStr += "<p style='font-size:15px;padding:5px 0;'><span style='display:inline-block;width:60px;font-size:14px;margin-left:10px;text-align: left;'>处分人数</span><span style='display:inline-block;width:40px;font-size:18px;color:#0675eb;margin-left:20px;margin-right:6px;text-align: right;'>" + params[0].value + "</span>件  环比<span>" +hbdata2[params[0].dataIndex]+ "</span></p>"
+                    }else{
+                        var imgUrl2 = +hbdata[params[1].dataIndex] > 0 ? 'images/rise_icon.png' : 'images/decline_icon.png';
+                        htmlStr += "<p style='font-size:15px;padding:5px 0;'><span style='display:inline-block;width:60px;font-size:14px;margin-left:10px;text-align: left;'>处分人数</span><span style='display:inline-block;width:40px;font-size:18px;color:#0675eb;margin-left:20px;margin-right:6px;text-align: right;'>" + params[1].value + "</span>件  环比<span><img src="+ imgUrl2 +" alt='' style='width:8px;height:auto;margin:0 5px 0 15px;'>" +hbdata2[params[0].dataIndex]+ "%</span></p>"
+                    }
+                    htmlStr += "</div>"
+                    return htmlStr;
+                }
+            },
+            legend: {
+                right:10,
+                top:0,
+                icon: "roundRect",
+                itemWidth: 27,
+                itemHeight: 14,
+                textStyle:{
+                    color: '#333333',
+                    fontSize: 14
+                },
+                padding: [5, 25, 5, 0],
+                data:['立案数','处分人数']
+            },
+            grid: {
+                left: '10%', 
+                top: '20%',
+                bottom: '15%',
+                right: '15%', 
+            },
+            calculable: true,
+            xAxis: [{
+                type: 'category',
+                axisTick: {       //刻度线
+                    "show": false
+                },
+                axisLine:{
+                    lineStyle:{
+                        color: '#e8e8e8',
+                        width: 2,
+                    }
+                },
+                axisLabel: {
+                    show: true,
+                    interval: 0,
+                    fontSize: 14,
+                    color: '#666',
+                    rotate: 40,
+                    margin: 15,
+                    formatter: function (params) {
+                        var val = "";
+                        if (params.length > 7) {
+                            val = params.substr(0, 7) + '...';
+                            return val;
+                        } else {
+                            return params;
+                        }
+                    },
+                },
+                axisPointer: {
+                    show: true,
+                    type: 'line',
+                    lineStyle:{
+                        color: 'rgba(219,219,217,.21)'
+                    }
+                },
+                
+                data: data.category.map(v => v+'月'),
+                axisTick: {       //刻度线
+                    "show": false
+                },
+            }],
+            yAxis: [{
+                type: 'value',
+                axisLine: { //y轴
+                    show: false
+                },
+                axisTick: { //y轴刻度线
+                    show: false
+                },
+                axisLabel: {
+                    textStyle: {
+                        color: '#666',
+                        fontSize:14,
+                    }
+                },
+                splitLine: {
+                    show: true,
+                    lineStyle:{
+                    color: '#e8e8e8',
+                }
+                },
+            }],
+            series: [
+                {
+                    name:'立案数',
+                    type: 'bar',
+                    barWidth: 30,
+                    stack: '月度分析',
+                    label: {
+                        normal: {
+                            show: false,
+                            position: 'top',
+                            color: '#1c92fe',
+                        }
+                    },
+                    data: data.caseCountList,
+                    itemStyle: {
+                        normal: {
+                            color: new echarts.graphic.LinearGradient(0, 0, 0, 1, [{ 
+                                offset: 0,
+                                color: '#9ad0ff'
+                            }, {
+                                offset: 1,
+                                color: '#329cf9'
+                            }]), 
+                            barBorderRadius: [4, 4, 4, 4],
+                        },
+                    }
+                },
+                {
+                    name:'处分人数',
+                    type: 'bar',
+                    stack: '月度分析',
+                    barWidth: 30,
+                    label: {
+                        normal: {
+                            show: false,
+                            position: 'top',
+                            color: '#1c92fe',
+                        }
+                    },
+                    data: data.personCountList,
+                    itemStyle: {
+                        normal: {
+                            color: new echarts.graphic.LinearGradient(0, 0, 0, 1, [{ 
+                                offset: 0,
+                                color: '#f2aefe'
+                            }, {
+                                offset: 1,
+                                color: '#c65ad7'
+                            }]), 
+                            barBorderRadius: [4, 4, 4, 4],
+                        },
+                    }
+                },
+
+                // 柱状图上的小圆点
+                {
+                    type: 'line',
+                    smooth: true,
+                    symbol: "circle",      // 默认是空心圆（中间是白色的），改成实心圆
+                    showAllSymbol: true,
+                    stack: '月度分析',
+                    hoverAnimation:false,
+                    symbolSize: 7,
+                    itemStyle:{
+                        normal:{
+                        color:'#b9c2ed', //折点颜色
+                        borderColor:'#fffffb',
+                        lineStyle:{
+                            color:'rgba(0,0,0,0)' //折线颜色
+                        }
+                        },
+                        emphasis: {
+                            color:'#ff6762', 
+                        } 
+                    },
+                    data:data.personCountList.map(v=>{ return 0}),
+                },
+            ]
+        }
+        bar_chart7.setOption(option, true);
+    }
+    function barChart8(){
+        var data = {"lableAndData":["129","3444","3333","4273","270","4073","6574","557","3900","366","886"],"lable":["打私反腐“一案双查”","公检法机关移送","信访举报","上级交办","审计中发现","公检法等机关移送","监督检查中发现","审查调查中发现","巡视巡察中发现","其他行政执法机关移送","其他"]}
+        var bar_chart8 = echarts.init(document.getElementById('bar-chart8'));
+        var option = {
+            tooltip: {
+                trigger: 'axis',
+                extraCssText:'width:auto;height:auto;',
+                // padding: [13,13],    // 内边距
+                backgroundColor:'rgba(0,0,0,0.6)',//通过设置rgba调节背景颜色与透明度
+                shadowBlur: 8,
+                shadowColor: 'rgba(0, 0, 0, 0.15)',
+                shadowOffsetY: 2,
+                color: '#ffffff',
+                textStyle:{
+                    color:'black',
+                },
+                axisPointer: {
+                    type: 'none',
+                    label: {
+                        backgroundColor: '#ffffff'
+                    }
+                },
+                lineStyle: {
+                    color:'#fff',
+                    show: false,
+
+                },
+                formatter: function (params, ticket, callback) {
+                    var htmlStr = "<div style='color: #ffffff;width:max-content;height:auto;'>";
+                    htmlStr += "<p style='font-size:16px;'>" + params[0].name + "</p>";
+                    htmlStr += "<p style='font-size:16px;padding:5px 0 0;'> <span font-size:24px;font-weight: bold;margin-right:4px;'>" + params[0].value + "</span>件</p>"
+                    htmlStr += "</div>"
+                    return htmlStr;
+                }
+            },
+            grid: {
+                left:'10',
+                right:'20',
+                bottom: '10',
+                top:'40',
+                containLabel: true,
+            },
+            xAxis: [
+                {
+                    type: 'category',
+                    //  boundaryGap: true,//坐标轴两边留白
+                    data:data.lable,
+                    axisLabel: { //坐标轴刻度标签的相关设置。
+                    //  interval: 0,//设置为 1，表示『隔一个标签显示一个标签』
+                    //  margin:15,
+                        textStyle: {
+                            color: '#333333',
+                            fontStyle: 'normal',
+                            fontFamily: '微软雅黑',
+                            fontSize: 12,
+                        },
+                        rotate:50,
+                        formatter: function(val) {
+                            if(val.length>9){
+                                var val1=val.slice(0,5);
+                                var val2=val.slice(5,10);
+                                val=val1+'\n'+val2;
+                            }else{
+                            }
+                            return val
+                        }
+                    },
+                    axisTick:{//坐标轴刻度相关设置。
+                        show: false,
+                    },
+                    axisLine:{//坐标轴轴线相关设置
+                        lineStyle:{
+                            color:'#e8e8e8',
+                            width:2
+                            // opacity:0.2
+                        }
+                    },
+                    splitLine: { //坐标轴在 grid 区域中的分隔线。
+                        show: false,
+                    }
+                }
+            ],
+            yAxis: [
+                {
+                    type: 'value',
+                    // splitNumber: 5,
+                    axisLabel: {
+                        textStyle: {
+                            color: '#666666',
+                            fontStyle: 'normal',
+                            fontFamily: '微软雅黑',
+                            fontSize: 12
+                        }
+                    },
+                    axisLine:{
+                        show: false,
+                            lineStyle:{
+                            color:'#666666',
+                        }
+                        
+                    },
+                    axisTick:{
+                        show: false
+                    },
+                    splitLine: {
+                        show: true,
+                        lineStyle: {
+                            color:'#e8e8e8',
+                            // opacity:0.06
+                        }
+                    }
+
+                }
+            ],
+            series: [
+                { // 背景色
+                    name:'',
+                    type: 'pictorialBar',
+                    stack: '总量',
+                    symbol: 'fixed',
+                    symbolSize: [28, 3],
+                    symbolMargin: 2,
+                    symbolRepeat: 'repeat',
+                    // symbolBoundingData: 300,
+                    // z: -10,
+                    data:data.lableAndData,
+                    label: {//图形上的文本标签
+                        normal: {
+                          show: false,
+                          position:'center',
+                          textStyle: {
+                              color: 'rgba(0,0,0,0)',
+                              fontStyle: 'normal',
+                              fontFamily: '微软雅黑',
+                              fontSize: 0,   
+                              // borderWidth:1,
+                              // borderColor:'#fe263e'
+                          },
+                        },
+                         emphasis: {
+                            show: true,
+                            textStyle: {
+                                  color: 'rgba(0,0,0,0)',
+                                  borderWidth:1,
+                                  height:3,
+                                  width:28,
+                                  borderColor:'#fe263e',
+                                  fontSize: 0,
+                                  backgroundColor:'#fe263e',  
+                                  padding:[0,0,0,0]
+                            },
+                            rich: {
+                                a:{
+                                    color: 'red',
+                                    lineHeight: 10
+                                },
+                                b:{
+                                    backgroundColor: {
+                                        image: 'xxx/xxx.jpg'
+                                    },
+                                    height: 10
+                                }
+                            }
+
+                        } 
+                    },
+                    barWidth: 28,
+                    barGap:0,//柱间距离
+                    itemStyle: {
+                      normal: {
+                          color: '#0f7cff'
+                      }
+                    }
+                }, 
+            ],
+        }
+        bar_chart8.setOption(option, true);
+    }
+    function barChart9(){
+        var data = [
+            {value: "122", name: "扶贫领域"},{value: "302", name: "扫黑除恶"},{value: "489", name: "三资管理"},{value: "290", name: "征地拆迁"},{value: "340", name: "惠农惠民"},{value: "190", name: "教育"},{value: "206", name: "医疗"},{value: "401", name: "生态环境保护"},{value: "140", name: "食品药品安全"},{value: "202", name: "行政审批和政务服务"},{value: "199", name: "生产安全"},{value: "100", name: "其他"}
+        ];
+         // 柱状图排序
+        function object(a,b) {
+            return b.value-a.value;
+        }      
+        var ysdata = data;
+        var sortdata0 = [];
+        for(var i=0;i<ysdata.length;i++){
+            sortdata0.push(ysdata[i]);
+        }      
+        var sortdata =sortdata0.sort(object);
+        var bar_chart9 = echarts.init(document.getElementById('bar-chart9'));
+        var option = {
+            tooltip: {
+                trigger: 'axis',
+                extraCssText:'width:auto;height:auto;',
+                formatter: "{b} {c}",
+                textStyle: {
+                        color:'#fff' ,
+                        fontSize: 12,//字体大小
+                        padding: [0, 10, 0, 0],
+                },
+            },
+            grid: {
+                left: '10%', 
+                top: '15%',
+                bottom: '20%',
+                width: '90%', 
+            },
+            xAxis: [{
+                type: 'category',
+                axisTick: {       //刻度线
+                    "show": false
+                },
+                axisLine:{
+                    lineStyle:{
+                        color: '#e8e8e8',
+                        width: 2,
+                    }
+                },
+                axisLabel: {
+                    show: true,
+                    interval: 0,
+                    fontSize: 14,
+                    color: '#666',
+                    rotate: 30,
+                    margin: 15,
+                    formatter: function (params) {
+                        var val = "";
+                        if (params.length > 5) {
+                            val = params.substr(0, 5) + '...';
+                            return val;
+                        } else {
+                            return params;
+                        }
+                    },
+                },
+                axisPointer: {
+                    show: true,
+                    type: 'line',
+                    lineStyle:{
+                        color: 'rgba(65,163,252,.4)'
+                    }
+                },
+                data: sortdata.map(v => v.name),
+                axisTick: {       //刻度线
+                    "show": false
+                },
+            }],
+            yAxis: [{
+                type: 'value',
+                axisLine: { //y轴
+                    show: false
+                },
+                axisTick: { //y轴刻度线
+                    show: false
+                },
+                axisLabel: {
+                    textStyle: {
+                        color: '#666',
+                        fontSize:14,
+                    }
+                },
+                splitLine: {
+                    show: true,
+                    lineStyle:{
+                    color: '#e8e8e8',
+                }
+                },
+            }],
+            series: [
+                // 柱状图上的小圆点
+                {
+                    type: 'line',
+                    smooth: true,
+                    symbol: "circle",      // 默认是空心圆（中间是白色的），改成实心圆
+                    showAllSymbol: true,
+                    hoverAnimation:false,
+                    symbolSize: 7,
+                    symbolOffset:['0','-2'],
+                    tooltip:{
+                        show:false 
+                    },
+                    itemStyle:{
+                        normal:{
+                        color:'#b9c2ed', //折点颜色
+                        borderColor:'#fffffb',
+                        lineStyle:{
+                            color:'rgba(0,0,0,0)' //折线颜色
+                        }
+                        },
+                        emphasis: {
+                            color:'#ff6762', 
+                        } 
+                    },
+                    data: sortdata.map(v => v.value),
+                    z:4
+                },
+                {
+                    type: 'bar',
+                    barWidth: 30,
+                    label: {
+                        normal: {
+                            show: true,
+                            position: 'top',
+                            color: '#1c92fe',
+                            padding: [3,10],
+                            distance: 3
+                        },
+                        emphasis:{
+                            show: true,
+                            backgroundColor:'#1e8efe',
+                            color: '#fff',
+                            borderRadius: 3,
+                            distance: 7
+                        }
+                    },
+                    itemStyle:{
+                        normal: {
+                            color: new echarts.graphic.LinearGradient(0, 0, 0, 1, [{ 
+                                offset: 0,
+                                color: '#1e8efe'
+                            }, {
+                                offset: 1,
+                                color: '#45cfff'
+                            }]), 
+                            barBorderRadius:[5,5,5,5]
+                        }
+                    },
+                    data: sortdata.map(v => v.value),
+                },
+                // 阴影
+                { 
+                    name:'a',
+                    tooltip:{
+                        show:false 
+                    },
+                    type: 'pictorialBar',
+                    itemStyle: {
+                            normal: {
+                            color: new echarts.graphic.LinearGradient(0, 0, 0, 1, [{ 
+                                offset: 0,
+                                color: '#1e8efe'
+                            }, {
+                                offset: 1,
+                                color: '#45cfff'
+                            }]),
+                        }
+                    },
+                    symbol: 'circle',
+                    symbolRotate: -90,
+                    symbolSize: ['8','30'],
+                    symbolOffset:['0','-13'],
+                    symbolPosition: 'end',
+                    data: sortdata.map(v => v.value),
+                    z:3
+                },
+            ]
+        }
+        bar_chart9.setOption(option, true);
+    }
+    function barChart10(){
+        var data = [{value: "180", name: "文化遗产保护"},{value: "190", name: "违建别墅清查整治"},{value: "204", name: "减税降费"},{value: "240", name: "整治农村乱占耕地建房"}]
+        var bar_chart10 = echarts.init(document.getElementById('bar-chart10'));
+        var colorList = [
+        {
+            type: 'linear',x: 0,y: 0,x2: 1,y2: 1,
+            colorStops: [{
+                    offset: 0,
+                    color: 'rgba(246,127,47,.6)' // 0% 处的颜色
+                },
+                {
+                    offset: 1,
+                    color: 'rgba(246,127,47,1)' // 100% 处的颜色
+                }
+            ],
+            globalCoord: false // 缺省为 false
+        },
+        {   
+            type: 'linear',x: 0,y: 0,x2: 1,y2: 1,
+            colorStops: [{
+                    offset: 0,
+                    color: 'rgba(151,66,247,.6)' // 0% 处的颜色
+                },
+                {
+                    offset: 1,
+                    color: 'rgba(151,66,247,1)' // 100% 处的颜色
+                }
+            ],
+            globalCoord: false // 缺省为 false
+        },
+        {
+            type: 'linear',x: 0,y: 0,x2: 1,y2: 1,
+            colorStops: [{
+                    offset: 0,
+                    color: 'rgba(250,92,81,.6)' // 0% 处的颜色
+                },
+                {
+                    offset: 1,
+                    color: 'rgba(250,92,81,1)' // 100% 处的颜色
+                }
+            ],
+            globalCoord: false // 缺省为 false
+        },
+        {
+            type: 'linear', x: 0,y: 0,x2: 1,y2: 1,
+            colorStops: [{
+                    offset: 0,
+                    color: 'rgba(34,148,255,.6)' // 0% 处的颜色
+                },
+                {
+                    offset: 1,
+                    color: 'rgba(34,148,255,1)' // 100% 处的颜色
+                }
+            ],
+            globalCoord: false // 缺省为 false
+        },    
+    ];
+        var colorLine = [
+            {
+                type: 'linear',x: 0,y: 0,x2: 1,y2: 1,
+                colorStops: [{
+                        offset: 0,
+                        color: '#f47b2c' // 0% 处的颜色
+                    },
+                    {
+                        offset: 1,
+                        color: '#fbbf69' // 100% 处的颜色
+                    }
+                ],
+                globalCoord: false // 缺省为 false
+            },
+            {   
+                type: 'linear',x: 0,y: 0,x2: 1,y2: 1,
+                colorStops: [{
+                        offset: 0,
+                        color: '#943ff4' // 0% 处的颜色
+                    },
+                    {
+                        offset: 1,
+                        color: '#c76ff9' // 100% 处的颜色
+                    }
+                ],
+                globalCoord: false // 缺省为 false
+            },
+            {
+                type: 'linear',x: 0,y: 0,x2: 1,y2: 1,
+                colorStops: [{
+                        offset: 0,
+                        color: '#fb5b4f' // 0% 处的颜色
+                    },
+                    {
+                        offset: 1,
+                        color: '#fd8f74' // 100% 处的颜色
+                    }
+                ],
+                globalCoord: false // 缺省为 false
+            },
+            {
+                type: 'linear', x: 0,y: 0,x2: 1,y2: 1,
+                colorStops: [{
+                        offset: 0,
+                        color: '#167fff' // 0% 处的颜色
+                    },
+                    {
+                        offset: 1,
+                        color: '#40c9ff' // 100% 处的颜色
+                    }
+                ],
+                globalCoord: false // 缺省为 false
+            },   
+        ]
+        var option = {
+                tooltip: {
+                    trigger: 'axis',
+                    extraCssText:'width:auto;height:auto;',
+                    formatter: "{b} {c}",
+                    textStyle: {
+                        color:'#fff' ,
+                        fontSize: 12,//字体大小
+                        padding: [0, 10, 0, 0],
+                    },
+                },
+                grid: {
+                    left: '23%', 
+                    top: '15%',
+                    bottom: '20%',
+                    width: '60%', 
+                },
+                calculable: true,
+                yAxis: [{
+                    type: 'category',
+                    axisTick: {       //刻度线
+                        "show": false
+                    },
+                    axisLine:{
+                        lineStyle:{
+                            color: '#e8e8e8',
+                            width: 2,
+                        }
+                    },
+                    axisLabel: {
+                        show: true,
+                        interval: 0,
+                        fontSize: 14,
+                        color: '#666',
+                        margin: 15,
+                        formatter: function (params) {
+                            var val = "";
+                            if (params.length > 7) {
+                                val = params.substr(0, 7) + '...';
+                                return val;
+                            } else {
+                                return params;
+                            }
+                        },
+                    },
+                    axisPointer: {
+                        show: true,
+                        type: 'line',
+                        lineStyle:{
+                            color: 'rgba(65,163,252,.4)'
+                        }
+                    },
+                    
+                    data: data.map(v => v.name),
+                    axisTick: {       //刻度线
+                        "show": false
+                    },
+                }],
+                xAxis: [{
+                    type: 'value',
+                    axisLine: { //y轴
+                        show: false
+                    },
+                    axisTick: { //y轴刻度线
+                        show: false
+                    },
+                    axisLabel: {
+                        show: false,
+                    },
+                    splitLine: {
+                        show: true,
+                        lineStyle:{
+                        color: '#e8e8e8',
+                    }
+                    },
+                }],
+                series: [
+                    {
+                    type: 'bar',
+                    barWidth: 20,
+                    data: data.map(v => v.value),
+                    itemStyle: {
+                        normal: {
+                            color: function(params) {
+                                return colorList[params.dataIndex];
+                            },
+                            barBorderRadius: [0, 5, 5, 0],
+                        },
+                    },
+                    label: {
+                        normal: {
+                            show: false,
+                            position: 'right',
+                            color: '#1c92fe',
+                            padding: [3,10],
+                            distance: 3
+                        },
+                        emphasis:{
+                            show: true,
+                            backgroundColor:'rgba(255,255,255,0.9)',
+                            color: '#333',
+                            borderRadius: 3,
+                            borderWidth: 1,
+                            shadowColor: 'rgba(0,0,0,0.3)',
+                            shadowBlur: 6,
+                            distance: 7
+                        }
+                    },
+                    },
+                    //投影效果
+                    { 
+                        name:'a',
+                        tooltip:{
+                            show:false 
+                        },
+                        type: 'pictorialBar',
+                        itemStyle: {
+                            normal: {
+                                color: function(params) {
+                                    return colorLine[params.dataIndex];
+                                }
+                            }
+                        },
+                        symbol: 'circle',
+                        symbolRotate: -90,
+                        symbolSize: ['20','10'],
+                        symbolOffset:['7','0'],
+                        symbolPosition: 'end',
+                        data: data.map(v => v.value),
+                        z:3
+                    },
+                ]
+            }
+            bar_chart10.setOption(option, true);
+        }
+    function barChart11(){
+        var data = [{"value":"84","name":"违反政治纪律行为"},{"value":"434","name":"违反组织纪律行为"},{"value":"1856","name":"违反廉洁纪律行为"},{"value":"1715","name":"违反群众纪律行为"},{"value":"1152","name":"违反工作纪律行为"},{"value":"350","name":"违反生活纪律行为"},{"value":"1236","name":"贪污贿赂类行为"},{"value":"651","name":"滥用职权类行为"},{"value":"178","name":"玩忽职守类行为"},{"value":"142","name":"徇私舞弊类行为"},{"value":"6","name":"重大责任事故类行为"},{"value":"705","name":"行使公权力过程中发生的其他违法犯罪行为"},{"value":"678","name":"其他违法犯罪行为"}];
+        var legend = data.map(v => v.name);
+        // 柱状图排序
+        function object(a,b) {
+            return b.value-a.value;
+        }      
+        var ysdata=data;
+        var sortdata0=[];
+        for(var i=0;i<ysdata.length;i++){
+            sortdata0.push(ysdata[i]);
+        }      
+        var sortdata =sortdata0.sort(object);
+        // 图例添加进去
+        var eLegend = document.getElementsByClassName('echarts_legend')[0];
+        eLegend.innerHTML = '';
+        var legendHtml = '<span class="legend_sort_tip sort_tip_top">高</span><span class="legend_sort_tip sort_tip_bottom">低</span>';
+        // 柱状图的颜色
+        var colorList = [
+                '#13d2de','#09adf1','#127bf2','#2748ef','#5627ef',
+                '#8527ef','#be27ef','#ed27ef','#ef27af','#ef277c',
+                '#ef273f','#ef4d27','#ef6427',
+        ];
+        legend.map(function(val,key) {
+            if(key >=0 ){
+                legendHtml += '<p class="flex-box legend_content"><span class="legend_index" style="background: linear-gradient(to bottom,' + colorList[key] + ' 0%,' + colorList[key] + ' 100%);">' + (key + 1) + '</span><span class="legend_title">' + legend[key] + '</span></p>'
+                eLegend.style.display="block";
+            }else{
+                eLegend.style.display="none";
+            }
+            eLegend.innerHTML = legendHtml;
+        });
+        // 图表渲染开始
+        var bar_chart11 = echarts.init(document.getElementById('bar-chart11'));
+        // 指定图表的配置项和数据
+        var colorLine = [
+            {
+                type: 'linear',x: 0,y: 0,x2: 1,y2: 1,
+                colorStops: [{
+                    offset: 0,
+                    color: 'rgba(80,136,249,1)' // 0% 处的颜色
+                },
+                    {
+                        offset: 1,
+                        color: 'rgba(80,136,249,0.7)' // 100% 处的颜色
+                    }
+                ],
+                globalCoord: false // 缺省为 false
+            },
+            {
+                type: 'linear',x: 0,y: 0,x2: 1,y2: 1,
+                colorStops: [{
+                    offset: 0,
+                    color: 'rgba(180,67,233,1)' // 0% 处的颜色
+                },
+                    {
+                        offset: 1,
+                        color: 'rgba(180,67,233,0.7)' // 100% 处的颜色
+                    }
+                ],
+                globalCoord: false // 缺省为 false
+            },
+            {
+                type: 'linear', x: 0,y: 0,x2: 1,y2: 1,
+                colorStops: [{
+                        offset: 0,
+                        color: 'rgba(253,125,124,1)' // 0% 处的颜色
+                    },
+                    {
+                        offset: 1,
+                        color: 'rgba(253,125,124,0.7)' // 100% 处的颜色
+                    }
+                ],
+                globalCoord: false // 缺省为 false
+            }
+        ];
+        var colorRich = [
+            "rgba(80,136,249,1)", "rgba(80,136,249,1)", "rgba(80,136,249,1)", "rgba(80,136,249,1)", "rgba(80,136,249,1)","rgba(80,136,249,1)",
+            "rgba(180,67,233,1)", "rgba(180,67,233,1)", "rgba(180,67,233,1)", "rgba(180,67,233,1)", "rgba(180,67,233,1)","rgba(180,67,233,1)",
+            "rgba(253,125,124,1)"
+        ];
+        function getRich() {
+            let result = {}
+            colorRich.forEach((v, i) => {
+                result[`color`] = '#333',
+                result[`icon`] = {
+                    fontSize: 14
+                }
+                result[`name`] = {
+                    fontSize: 14,
+                    padding: [8,0,0,0],
+                    color: '#333'
+                }
+                result[`percent`] = {
+                    color: '#333',
+                    padding: [0,0,8,0],
+                }
+                result[`value`] = {
+                    fontSize: 14,
+                    fontWeight: 'bold',
+                    color: '#333'
+                }
+                result[`hr${i}`] = {
+                    padding: [0, -30, 0, -32],
+                    borderColor: colorRich[i],
+                    width: '90%',
+                    borderWidth: 1,
+                    height: 0,
+                }
+            })
+            return result
+        }
+        var option = {
+            color: [
+                "rgba(80,136,249,1)", "rgba(80,136,249,1)", "rgba(80,136,249,1)", "rgba(80,136,249,1)", "rgba(80,136,249,1)","rgba(80,136,249,1)",
+                "rgba(180,67,233,1)", "rgba(180,67,233,1)", "rgba(180,67,233,1)", "rgba(180,67,233,1)", "rgba(180,67,233,1)","rgba(180,67,233,1)",
+                "rgba(253,125,124,1)"
+            ],
+            title: {
+                text: '问题性质数量排行',
+                left: 0,
+                top: '0',
+                textStyle: {
+                    color:'#333',
+                    fontStyle:'normal' ,
+                    fontWeight:'normal',
+                    fontSize:16
+                }
+            },
+            grid: {
+                left: 10,
+                top: '12%',
+                right: 5,
+                bottom: 5,
+                containLabel: true,
+            },
+            tooltip: {
+                // trigger: 'item',
+                trigger: 'axis',
+                padding: [10,20],    // 内边距
+                backgroundColor:'rgba(255,255,255,0.9)',//通过设置rgba调节背景颜色与透明度
+                color: '#0f0f0f',
+                textStyle:{
+                    color:'black',
+                },
+                formatter: function (params, ticket, callback) {
+                    var htmlStr = "<div style='color: #0f0f0f;'>";
+                    htmlStr += "<p style='font-size:15px;'>" + params[0].name + "</p>";
+                    htmlStr += "<p style='font-size:15px;padding:5px 0;'><span style='dispaly:inline-block;color:#0b73ec;padding-right:8px;font-size:20px;font-weight: bold;'>" + params[0].value + "</span>件</p>"
+                    htmlStr += "<p style='font-size:15px;'></p>"
+                    htmlStr += "</div>"
+                    return htmlStr;
+                }
+            },
+            xAxis: {
+                type: 'category',
+                boundaryGap: true,
+                data: legend,
+                axisPointer: {
+                    show: true,
+                    type: 'line',
+                    lineStyle:{
+                        color: 'rgba(230,212,254,.8)'
+                    }
+                },
+                axisLine:{
+                    lineStyle:{
+                    fontSize: 16,
+                    color:'#c9c6c6'
+                    }
+                },
+                axisTick:{
+                    show: false,
+                },
+                axisLabel: {
+                    fontSize: 16,
+                    color: '#333333',
+                    interval: 0,
+                    show: true,
+                    formatter: function (value, index) {
+                        return (index + 1);
+                    }
+                },
+            },
+            yAxis: {
+                type: 'value',
+                axisLine: {
+                    show: false
+                },
+                axisTick: {
+                    show: false
+                },
+                axisLabel: {
+                    textStyle: {
+                    fontSize: 14,
+                    color: '#666666'
+                    }
+                },
+                splitLine: {
+                    lineStyle:{
+                    color: '#ced3dc',
+                    width: 1,
+                    type: 'dashed'
+                    }
+                }
+            },
+            series: [
+                // 柱状图上的小圆点
+                {
+                    type: 'line',
+                    smooth: true,
+                    symbol: "circle",      // 默认是空心圆（中间是白色的），改成实心圆
+                    showAllSymbol: true,
+                    symbolSize: 7,
+                    z:4,
+                    itemStyle:{
+                        normal:{
+                        color:'#bcc1eb', //折点颜色
+                        borderColor:'#fffffb',
+                        lineStyle:{
+                            color:'rgba(0,0,0,0)' //折线颜色
+                        }
+                        }
+                    },
+                    data: sortdata.map(v => v.value),
+                },
+                // 柱状图
+                {
+                    type: 'bar',
+                    xAxisIndex: 0,
+                    yAxisIndex: 0,
+                    data: sortdata.map(v => v.value),
+                    barWidth: '30',
+                    z: 3,
+                    itemStyle: {
+                        barBorderRadius: [5, 5, 2, 2],
+                        emphasis: {
+                            barBorderRadius: [5, 5, 2, 2],
+                        },
+                        normal: {
+                            barBorderRadius: [5, 5, 2, 2],
+                            color: function(params) {
+                                return colorList[params.dataIndex]
+                            },
+                        }
+                },
+                },
+                // 柱状图后面的阴影背景部分
+                {
+                    type: 'line',
+                    smooth: true,
+                    symbol: 'none',  //取消折点圆圈
+                    clickable:false,
+                    areaStyle: {normal: {
+                        color: new echarts.graphic.LinearGradient(0, 0, 0, 1, [
+                            {offset: 0, color: 'rgba(80,163,255,.6)'},
+                            {offset: 1, color: 'rgba(80,163,255,.1)'}
+                        ]),
+                        shadowColor: 'rgba(80,163,255,.2)',
+                    }},
+                    itemStyle:{
+                        normal:{
+                        lineStyle:{
+                            color:'rgba(0,0,0,0)' //折线颜色
+                        }
+                        }
+                    },
+                    data: sortdata.map(v => +v.value + +100),
+                },
+            ]
+        };
+        // 使用刚指定的配置项和数据显示图表。
+        bar_chart11.setOption(option, true);
+    }
+    barChart();
+    barChart2();
+    barChart3();
+    barChart4();
+    barChart5();
+    barChart6();
+    barChart7();
+    barChart8();
+    barChart9();
+    barChart10();
+    barChart11();
+</script>
+</html>
